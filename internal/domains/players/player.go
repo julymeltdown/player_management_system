@@ -9,13 +9,13 @@ import (
 
 // Player represents a player entity.
 type Player struct {
-	ID              uuid.UUID `json:"id"`
-	Name            string    `json:"name"`
-	Sport           string    `json:"sport"`
-	Team            string    `json:"team"`
-	ProfileImageURL string    `json:"profile_image_url"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID              uuid.UUID `json:"id" db:"id"`
+	Name            string    `json:"name" db:"name"`
+	Sport           string    `json:"sport" db:"sport"`
+	Team            string    `json:"team" db:"team"`
+	ProfileImageURL string    `json:"profile_image_url" db:"profile_image_url"`
+	CreatedAt       time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // NewPlayer creates a new Player entity.
