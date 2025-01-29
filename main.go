@@ -1,25 +1,60 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
+	"player_management_system/config"
+	playerHttpHandler "player_management_system/internal/handlers/http"
+	platformPostgres "player_management_system/internal/platform/postgres"
+	"player_management_system/internal/repositories/player/postgres"
+	"player_management_system/internal/services/player"
 )
 
-//TIP To run your code, right-click the code and select <b>Run</b>. Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.
-
 func main() {
-	//TIP Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined or highlighted text
-	// to see how GoLand suggests fixing it.
-	s := "gopher"
-	fmt.Println("Hello and welcome, %s!", s)
+	// Load configuration
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
 
-	for i := 1; i <= 5; i++ {
-		//TIP You can try debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-		// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>. To start your debugging session,
-		// right-click your code in the editor and select the <b>Debug</b> option.
-		fmt.Println("i =", 100/i)
+	// Database configuration
+	dbConfig := platformPostgres.Config{
+		Host:     cfg.DBHost,
+		Port:     cfg.DBPort,
+		User:     cfg.DBUser,
+		Password: cfg.DBPassword,
+		DBName:   cfg.DBName,
+	}
+
+	// Connect to the database
+	db, err := platformPostgres.New(dbConfig)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// Create repository, service, and handler
+	playerRepo := postgres.NewPlayerRepository(db)
+	playerService := player.NewPlayerService(playerRepo)
+	playerHandler := playerHttpHandler.NewPlayerHandler(playerService)
+
+	// Create Echo instance
+	e := echo.New()
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Routes
+	playerHandler.RegisterRoutes(e)
+
+	// Start server
+	log.Printf("Starting server on port %s", cfg.Port)
+	if err := e.Start(":" + cfg.Port); err != nil && err != http.ErrServerClosed {
+		e.Logger.Fatal("shutting down the server")
 	}
 }
-
-//TIP See GoLand help at <a href="https://www.jetbrains.com/help/go/">jetbrains.com/help/go/</a>.
-// Also, you can try interactive lessons for GoLand by selecting 'Help | Learn IDE Features' from the main menu.
