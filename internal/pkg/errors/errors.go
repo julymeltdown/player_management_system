@@ -1,6 +1,12 @@
 package errors
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+)
 
 // ErrorCode represents a custom error code.
 type ErrorCode string
@@ -14,13 +20,13 @@ const (
 	NotConnectedError    ErrorCode = "NotConnected"
 )
 
-// Error messages for each error code.
-var errorMessages = map[ErrorCode]string{
-	InvalidArgumentError: "Invalid argument: %s",
-	NotFoundError:        "Entity not found: %s",
-	InternalError:        "Internal server error",
-	DatabaseError:        "Database error: %s",
-	NotConnectedError:    "Database connection is not established",
+// HTTP status codes for each error code
+var errorStatusCodes = map[ErrorCode]int{
+	InvalidArgumentError: http.StatusBadRequest,
+	NotFoundError:        http.StatusNotFound,
+	InternalError:        http.StatusInternalServerError,
+	DatabaseError:        http.StatusInternalServerError,
+	NotConnectedError:    http.StatusServiceUnavailable,
 }
 
 // Error represents a custom error.
@@ -34,24 +40,39 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("[%s] %s", e.Code, e.Message)
 }
 
-// NewError creates a new custom error with a formatted message.
+// NewError creates a new custom error.
 func NewError(code ErrorCode, message string) *Error {
-	// Use the default message if a specific message is not provided.
-	if message == "" {
-		message = errorMessages[code]
-	}
 	return &Error{
 		Code:    code,
 		Message: message,
 	}
 }
 
-// NewErrorWithArgs NewError creates a new custom error with a formatted message.
-func NewErrorWithArgs(code ErrorCode, args ...interface{}) *Error {
-	message := fmt.Sprintf(errorMessages[code], args...)
-
+// NewErrorWithArgs creates a new custom error with formatted message.
+func NewErrorWithArgs(code ErrorCode, format string, args ...interface{}) *Error {
 	return &Error{
 		Code:    code,
-		Message: message,
+		Message: fmt.Sprintf(format, args...),
 	}
+}
+
+// GetHTTPStatusCode returns the HTTP status code for an error.
+func GetHTTPStatusCode(err error) int {
+	var customErr *Error
+	if errors.As(err, &customErr) {
+		if statusCode, ok := errorStatusCodes[customErr.Code]; ok {
+			return statusCode
+		}
+	}
+	return http.StatusInternalServerError
+}
+
+// HandleHTTPError handles HTTP errors based on the custom error type.
+func HandleHTTPError(c echo.Context, err error) error {
+	var customErr *Error
+	if errors.As(err, &customErr) {
+		return c.JSON(GetHTTPStatusCode(err), customErr)
+	}
+	// If the error is not a custom error, return a generic internal server error.
+	return c.JSON(http.StatusInternalServerError, NewError(InternalError, "Internal server error"))
 }
