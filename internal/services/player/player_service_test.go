@@ -42,6 +42,11 @@ func (m *MockPlayerRepository) GetPlayers(ctx context.Context) ([]*playerDom.Pla
 	return args.Get(0).([]*playerDom.Player), args.Error(1)
 }
 
+func (m *MockPlayerRepository) GetPlayersWithPagination(ctx context.Context, page, pageSize int) ([]*playerDom.Player, error) {
+	args := m.Called(ctx, page, pageSize)
+	return args.Get(0).([]*playerDom.Player), args.Error(1)
+}
+
 func TestCreatePlayer(t *testing.T) {
 	mockRepo := new(MockPlayerRepository)
 	service := NewPlayerService(mockRepo)

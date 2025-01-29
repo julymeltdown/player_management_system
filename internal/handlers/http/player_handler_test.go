@@ -48,6 +48,11 @@ func (m *MockPlayerService) GetPlayers(ctx context.Context) ([]*playerDomain.Pla
 	return args.Get(0).([]*playerDomain.Player), args.Error(1)
 }
 
+func (m *MockPlayerService) GetPlayersWithPagination(ctx context.Context, page, pageSize int) ([]*playerDomain.Player, error) {
+	args := m.Called(ctx, page, pageSize)
+	return args.Get(0).([]*playerDomain.Player), args.Error(1)
+}
+
 func TestCreatePlayer_Success(t *testing.T) {
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/players", strings.NewReader(`{"name":"Test Player","sport":"Football","team":"Test Team","profile_image_url":"http://example.com"}`))
@@ -235,6 +240,95 @@ func TestGetPlayer_InternalError(t *testing.T) {
 
 	// 실행
 	err := handler.GetPlayer(c)
+
+	// 검증
+	assert.Error(t, err)
+
+	var httpErr *echo.HTTPError
+	if errors.As(err, &httpErr) {
+		assert.Equal(t, http.StatusInternalServerError, httpErr.Code)
+	} else {
+		assert.Fail(t, "Expected *echo.HTTPError")
+	}
+}
+
+func TestGetPlayers_Success(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/players?page=1&size=10", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	mockService := new(MockPlayerService)
+	expectedPlayers := []*playerDomain.Player{
+		{
+			ID:              uuid.New(),
+			Name:            "Test Player 1",
+			Sport:           "Football",
+			Team:            "Test Team 1",
+			ProfileImageURL: "http://example.com/image1.jpg",
+		},
+		{
+			ID:              uuid.New(),
+			Name:            "Test Player 2",
+			Sport:           "Basketball",
+			Team:            "Test Team 2",
+			ProfileImageURL: "http://example.com/image2.jpg",
+		},
+	}
+	mockService.On("GetPlayersWithPagination", mock.Anything, 1, 10).Return(expectedPlayers, nil)
+
+	handler := NewPlayerHandler(mockService)
+
+	// Assertions
+	if assert.NoError(t, handler.GetPlayers(c)) {
+		assert.Equal(t, http.StatusOK, rec.Code)
+	}
+}
+
+func TestGetPlayers_InvalidPage(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/players?page=invalid&size=10", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	mockService := new(MockPlayerService)
+	// Page가 유효하지 않은 경우, 기본값으로 page=1, size=10을 사용하도록 설정
+	mockService.On("GetPlayersWithPagination", mock.Anything, 1, 10).Return([]*playerDomain.Player{}, nil)
+	handler := NewPlayerHandler(mockService)
+
+	// Assertions
+	assert.NoError(t, handler.GetPlayers(c))
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestGetPlayers_InvalidSize(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/players?page=1&size=invalid", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	mockService := new(MockPlayerService)
+	// Size가 유효하지 않은 경우, 기본값으로 page=1, size=10을 사용하도록 설정
+	mockService.On("GetPlayersWithPagination", mock.Anything, 1, 10).Return([]*playerDomain.Player{}, nil)
+	handler := NewPlayerHandler(mockService)
+
+	// Assertions
+	assert.NoError(t, handler.GetPlayers(c))
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestGetPlayers_ServiceError(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/players?page=1&size=10", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	mockService := new(MockPlayerService)
+	mockService.On("GetPlayersWithPagination", mock.Anything, 1, 10).Return([]*playerDomain.Player{}, customErrors.NewError(customErrors.DatabaseError, "database error"))
+	handler := NewPlayerHandler(mockService)
+
+	// 실행
+	err := handler.GetPlayers(c)
 
 	// 검증
 	assert.Error(t, err)
