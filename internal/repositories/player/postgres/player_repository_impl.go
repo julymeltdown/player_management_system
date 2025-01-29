@@ -22,6 +22,10 @@ func NewPlayerRepository(db *sqlx.DB) playerRepo.PlayerRepository {
 
 // CreatePlayer implements playerRepo.PlayerRepository.
 func (r *playerRepository) CreatePlayer(ctx context.Context, p *player.Player) error {
+	if r.db == nil {
+		return errors.NewError(errors.NotConnectedError, "")
+	}
+
 	query := `
         INSERT INTO players (id, name, sport, team, profile_image_url, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -39,7 +43,7 @@ func (r *playerRepository) CreatePlayer(ctx context.Context, p *player.Player) e
 		p.UpdatedAt,
 	)
 	if err != nil {
-		return errors.NewInternalError(err.Error())
+		return errors.NewErrorWithArgs(errors.DatabaseError, err.Error()) // DatabaseError 사용
 	}
 
 	return nil
@@ -47,6 +51,10 @@ func (r *playerRepository) CreatePlayer(ctx context.Context, p *player.Player) e
 
 // DeletePlayer implements playerRepo.PlayerRepository.
 func (r *playerRepository) DeletePlayer(ctx context.Context, id uuid.UUID) error {
+	if r.db == nil {
+		return errors.NewError(errors.NotConnectedError, "")
+	}
+
 	query := `
         DELETE FROM players
         WHERE id = $1
@@ -54,7 +62,7 @@ func (r *playerRepository) DeletePlayer(ctx context.Context, id uuid.UUID) error
 
 	_, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
-		return errors.NewInternalError(err.Error())
+		return errors.NewErrorWithArgs(errors.DatabaseError, err.Error())
 	}
 
 	return nil
@@ -62,6 +70,10 @@ func (r *playerRepository) DeletePlayer(ctx context.Context, id uuid.UUID) error
 
 // GetPlayerByID implements playerRepo.PlayerRepository.
 func (r *playerRepository) GetPlayerByID(ctx context.Context, id uuid.UUID) (*player.Player, error) {
+	if r.db == nil {
+		return nil, errors.NewError(errors.NotConnectedError, "")
+	}
+
 	var p player.Player
 	query := `
         SELECT id, name, sport, team, profile_image_url, created_at, updated_at
@@ -72,9 +84,9 @@ func (r *playerRepository) GetPlayerByID(ctx context.Context, id uuid.UUID) (*pl
 	err := r.db.GetContext(ctx, &p, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.NewNotFoundError("player not found")
+			return nil, errors.NewErrorWithArgs(errors.NotFoundError, "player not found")
 		}
-		return nil, errors.NewInternalError(err.Error())
+		return nil, errors.NewErrorWithArgs(errors.DatabaseError, err.Error())
 	}
 
 	return &p, nil
@@ -82,6 +94,10 @@ func (r *playerRepository) GetPlayerByID(ctx context.Context, id uuid.UUID) (*pl
 
 // GetPlayers implements playerRepo.PlayerRepository.
 func (r *playerRepository) GetPlayers(ctx context.Context) ([]*player.Player, error) {
+	if r.db == nil {
+		return nil, errors.NewError(errors.NotConnectedError, "")
+	}
+
 	var players []*player.Player
 	query := `
         SELECT id, name, sport, team, profile_image_url, created_at, updated_at
@@ -90,7 +106,7 @@ func (r *playerRepository) GetPlayers(ctx context.Context) ([]*player.Player, er
 
 	err := r.db.SelectContext(ctx, &players, query)
 	if err != nil {
-		return nil, errors.NewInternalError(err.Error())
+		return nil, errors.NewErrorWithArgs(errors.DatabaseError, err.Error())
 	}
 
 	return players, nil
@@ -98,6 +114,10 @@ func (r *playerRepository) GetPlayers(ctx context.Context) ([]*player.Player, er
 
 // UpdatePlayer implements playerRepo.PlayerRepository.
 func (r *playerRepository) UpdatePlayer(ctx context.Context, p *player.Player) error {
+	if r.db == nil {
+		return errors.NewError(errors.NotConnectedError, "")
+	}
+
 	query := `
         UPDATE players
         SET name = $1, sport = $2, team = $3, profile_image_url = $4, updated_at = $5
@@ -115,7 +135,7 @@ func (r *playerRepository) UpdatePlayer(ctx context.Context, p *player.Player) e
 		p.ID,
 	)
 	if err != nil {
-		return errors.NewInternalError(err.Error())
+		return errors.NewErrorWithArgs(errors.DatabaseError, err.Error())
 	}
 
 	return nil
