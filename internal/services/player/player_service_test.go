@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	playerDom "player_management_system/internal/domains/players"
-	playerSvc "player_management_system/internal/services/player"
 )
 
 // MockPlayerRepository is a mock implementation of the PlayerRepository interface.
@@ -45,7 +44,7 @@ func (m *MockPlayerRepository) GetPlayers(ctx context.Context) ([]*playerDom.Pla
 
 func TestCreatePlayer(t *testing.T) {
 	mockRepo := new(MockPlayerRepository)
-	service := playerSvc.NewPlayerService(mockRepo)
+	service := NewPlayerService(mockRepo)
 
 	p := &playerDom.Player{
 		ID:              uuid.New(),
@@ -67,7 +66,7 @@ func TestCreatePlayer(t *testing.T) {
 
 func TestGetPlayerByID(t *testing.T) {
 	mockRepo := new(MockPlayerRepository)
-	service := playerSvc.NewPlayerService(mockRepo)
+	service := NewPlayerService(mockRepo)
 
 	playerID := uuid.New()
 	expectedPlayer := &playerDom.Player{
@@ -91,7 +90,7 @@ func TestGetPlayerByID(t *testing.T) {
 
 func TestUpdatePlayer(t *testing.T) {
 	mockRepo := new(MockPlayerRepository)
-	service := playerSvc.NewPlayerService(mockRepo)
+	service := NewPlayerService(mockRepo)
 
 	p := &playerDom.Player{
 		ID:              uuid.New(),
@@ -113,7 +112,7 @@ func TestUpdatePlayer(t *testing.T) {
 
 func TestDeletePlayer(t *testing.T) {
 	mockRepo := new(MockPlayerRepository)
-	service := playerSvc.NewPlayerService(mockRepo)
+	service := NewPlayerService(mockRepo)
 
 	playerID := uuid.New()
 
@@ -127,7 +126,7 @@ func TestDeletePlayer(t *testing.T) {
 
 func TestGetPlayers(t *testing.T) {
 	mockRepo := new(MockPlayerRepository)
-	service := playerSvc.NewPlayerService(mockRepo)
+	service := NewPlayerService(mockRepo)
 
 	expectedPlayers := []*playerDom.Player{
 		{

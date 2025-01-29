@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	playerDom "player_management_system/internal/domains/players"
-	playerRepoImpl "player_management_system/internal/repositories/player/postgres"
 )
 
 func TestCreatePlayer(t *testing.T) {
@@ -25,7 +24,7 @@ func TestCreatePlayer(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
 	// Create the repository
-	repo := playerRepoImpl.NewPlayerRepository(sqlxDB)
+	repo := NewPlayerRepository(sqlxDB)
 
 	// Create a new player
 	p := &playerDom.Player{
@@ -58,7 +57,7 @@ func TestGetPlayerByID(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	repo := playerRepoImpl.NewPlayerRepository(sqlxDB)
+	repo := NewPlayerRepository(sqlxDB)
 
 	playerID := uuid.New()
 	rows := sqlmock.NewRows([]string{"id", "name", "sport", "team", "profile_image_url", "created_at", "updated_at"}). // profile_image_url 추가
@@ -83,7 +82,7 @@ func TestUpdatePlayer(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	repo := playerRepoImpl.NewPlayerRepository(sqlxDB)
+	repo := NewPlayerRepository(sqlxDB)
 
 	p := &playerDom.Player{
 		ID:              uuid.New(),
@@ -112,7 +111,7 @@ func TestDeletePlayer(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	repo := playerRepoImpl.NewPlayerRepository(sqlxDB)
+	repo := NewPlayerRepository(sqlxDB)
 
 	playerID := uuid.New()
 
@@ -133,7 +132,7 @@ func TestGetPlayers(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	repo := playerRepoImpl.NewPlayerRepository(sqlxDB)
+	repo := NewPlayerRepository(sqlxDB)
 
 	rows := sqlmock.NewRows([]string{"id", "name", "sport", "team", "profile_image_url", "created_at", "updated_at"}).
 		AddRow(uuid.New(), "Test Player 1", "Football", "Test Team", "http://example.com/image1.jpg", time.Now(), time.Now()).

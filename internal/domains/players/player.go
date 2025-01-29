@@ -21,13 +21,13 @@ type Player struct {
 // NewPlayer creates a new Player entity.
 func NewPlayer(name, sport, team, profileImageURL string) (*Player, error) {
 	if name == "" {
-		return nil, errors.NewErrorWithArgs(errors.InvalidArgumentError, "name")
+		return nil, errors.NewErrorWithArgs(errors.InvalidArgumentError, "Invalid argument: %s", "name")
 	}
 	if sport == "" {
-		return nil, errors.NewErrorWithArgs(errors.InvalidArgumentError, "sport")
+		return nil, errors.NewErrorWithArgs(errors.InvalidArgumentError, "Invalid argument: %s", "sport")
 	}
 	if team == "" {
-		return nil, errors.NewErrorWithArgs(errors.InvalidArgumentError, "team")
+		return nil, errors.NewErrorWithArgs(errors.InvalidArgumentError, "Invalid argument: %s", "team")
 	}
 
 	return &Player{
