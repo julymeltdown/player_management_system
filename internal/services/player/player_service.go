@@ -15,6 +15,7 @@ type PlayerService interface {
 	UpdatePlayer(ctx context.Context, player *player.Player) error
 	DeletePlayer(ctx context.Context, id uuid.UUID) error
 	GetPlayers(ctx context.Context) ([]*player.Player, error)
+	GetPlayersWithPagination(ctx context.Context, page, pageSize int) ([]*player.Player, error)
 }
 
 type playerService struct {
@@ -49,4 +50,9 @@ func (s *playerService) DeletePlayer(ctx context.Context, id uuid.UUID) error {
 // GetPlayers retrieves all players.
 func (s *playerService) GetPlayers(ctx context.Context) ([]*player.Player, error) {
 	return s.repo.GetPlayers(ctx)
+}
+
+// GetPlayersWithPagination retrieves players with pagination.
+func (s *playerService) GetPlayersWithPagination(ctx context.Context, page, pageSize int) ([]*player.Player, error) {
+	return s.repo.GetPlayersWithPagination(ctx, page, pageSize)
 }

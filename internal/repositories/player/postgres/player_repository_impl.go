@@ -140,3 +140,33 @@ func (r *playerRepository) UpdatePlayer(ctx context.Context, p *player.Player) e
 
 	return nil
 }
+
+// GetPlayersWithPagination implements playerRepo.PlayerRepository.
+func (r *playerRepository) GetPlayersWithPagination(ctx context.Context, page, pageSize int) ([]*player.Player, error) {
+	if r.db == nil {
+		return nil, errors.NewError(errors.NotConnectedError, "database connection is not established")
+	}
+
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10 // 기본값 설정
+	}
+
+	offset := (page - 1) * pageSize
+
+	var players []*player.Player
+	query := `
+        SELECT id, name, sport, team, profile_image_url, created_at, updated_at
+        FROM players
+        LIMIT $1 OFFSET $2
+    `
+
+	err := r.db.SelectContext(ctx, &players, query, pageSize, offset)
+	if err != nil {
+		return nil, errors.NewErrorWithArgs(errors.DatabaseError, err.Error())
+	}
+
+	return players, nil
+}

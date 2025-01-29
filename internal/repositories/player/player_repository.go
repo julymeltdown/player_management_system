@@ -14,4 +14,5 @@ type PlayerRepository interface {
 	UpdatePlayer(ctx context.Context, player *player.Player) error
 	DeletePlayer(ctx context.Context, id uuid.UUID) error
 	GetPlayers(ctx context.Context) ([]*player.Player, error)
+	GetPlayersWithPagination(ctx context.Context, page, pageSize int) ([]*player.Player, error)
 }
